@@ -113,7 +113,34 @@
 </div>
 <main class="app-body">
   <article class="post-article">
-    <section class="markdown-content"></section>
+    <section class="markdown-content"><h2 id="提前准备"><a href="#提前准备" class="headerlink" title="提前准备"></a>提前准备</h2><p>如果想真正科学上网还是推荐搭建SSR或者其他VPN服务，下面讲到的反向代理好处是客户端不用做任何配置，但是坏处简单说就是还是部分页面无法打开的。原因是因为代理拿回来的页面上有一些链接是www.google.com开头的，而不是绝对路径。当然可以通过修改代理拿回来的html之后再返回给客户端来解决这个问题。但本文主要是讨论Nginx反向代理的应用，另外，此方法值适合临时访问谷歌。长期FQ强烈推荐搭建SSR服务！</p>
+<p><strong>开始之前请确保：</strong></p>
+<ul>
+<li>一台能访问谷歌的服务器，我用的是香港的阿里云CentOS7.2</li>
+<li>提前安装好Nginx，设置好防火墙规则，确保80端口能正常访问</li>
+</ul>
+<p><strong>原理解析</strong></p>
+<p>我们的服务器会有Nginx监听80端口，80端口是对外开放的，另外还有一个Nodejs应用监听3000端口，这个端口不对外开放，用户无法直接访问，但是我们能会通过Nginx的反向代理功能来把所有80端口的流量转发到3000端口的这个node应用上，node应用会负责从Google服务器上拿资料然后原路返回给80端口的访问用户。</p>
+<h2 id="搭建Node服务"><a href="#搭建Node服务" class="headerlink" title="搭建Node服务"></a>搭建Node服务</h2><p><strong>先安装Nodejs坏境</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ yum -y install nodejs</div></pre></td></tr></table></figure>
+<p><strong>安装pm2，进程管理工具，可以让node应用作为服务在后台运行</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ npm install -g pm2</div></pre></td></tr></table></figure>
+<p>node环境搭建完成之后我们来新建一个node应用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ <span class="built_in">cd</span></div><div class="line">$ mkdir google-proxy</div><div class="line">$ <span class="built_in">cd</span> google-proxy</div><div class="line">$ npm init   // 初始化node项目，所有提示全部按yes</div><div class="line">$ npm install express request --save   安装node包</div><div class="line">$ vi proxy-service.js   node应用主入口</div></pre></td></tr></table></figure>
+<p>下面代码复制进去保存</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);</div><div class="line"><span class="keyword">var</span> request = <span class="built_in">require</span>(<span class="string">'request'</span>);</div><div class="line"><span class="keyword">var</span> app = express();</div><div class="line">app.use(<span class="string">'/'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">req, res</span>) </span>&#123;</div><div class="line">    <span class="keyword">var</span> url = <span class="string">'https://www.google.com/'</span> + req.url;</div><div class="line">    req.pipe(request(url)).pipe(res);</div><div class="line">&#125;);</div><div class="line">app.listen(process.env.PORT || <span class="number">3000</span>);</div></pre></td></tr></table></figure>
+<p>代码就不解释了，简单说就是监听3000端口，所有 <code>/</code> 开头的请求全部到 <code>https://www.google.com/</code> 拿数据然后原路返回</p>
+<p>最后运行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pm2 start proxy-service.js</div></pre></td></tr></table></figure>
+<p>为了确保node服务正常监听3000端口，可以运行 <code>curl localhost:3000</code> 来看看是否返回Google的页面，正常返回的话进去下一步Nginx反向代理</p>
+<h2 id="配置Nginx反向代理"><a href="#配置Nginx反向代理" class="headerlink" title="配置Nginx反向代理"></a>配置Nginx反向代理</h2><p>nginx的配置很简单，打开nginx配置文件，添加这几行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">. . .</div><div class="line">    location / &#123;·</div><div class="line">        proxy_pass http://localhost:3000;</div><div class="line">        proxy_http_version 1.1;</div><div class="line">        proxy_set_header Upgrade <span class="variable">$http_upgrade</span>;</div><div class="line">        proxy_set_header Connection <span class="string">'upgrade'</span>;</div><div class="line">        proxy_set_header Host <span class="variable">$host</span>;</div><div class="line">        proxy_cache_bypass <span class="variable">$http_upgrade</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这样子，所有到80端口的流量都会被转发到服务器上3000端口的node应用，node会负责从Google拿数据，原路返回。enjoy！</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-centos-7" target="_blank" rel="external">https://www.digitalocean.com/community/tutorials/how-to-set-up-a-node-js-application-for-production-on-centos-7</a></li>
+<li><a href="http://www.jianshu.com/p/50d82333b22ahttp://www.jianshu.com/p/50d82333b22a" target="_blank" rel="external">http://www.jianshu.com/p/50d82333b22ahttp://www.jianshu.com/p/50d82333b22a</a></li>
+</ul>
+</section>
     
     <div class="money-like">
       <div class="reward-btn">
