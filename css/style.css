@@ -646,6 +646,47 @@ figure.highlight.bash td.code .shell {
 .markdown-content p {
   margin-bottom: 10px;
 }
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+  color: #fff;
+}
+.hljs-comment,
+.hljs-quote {
+  color: #fff;
+}
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #4d4d4c;
+}
+.bash .line {
+  color: #fff;
+}
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #fff;
+}
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+  color: #fff;
+}
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+  color: #fff;
+}
 #tag-cloud {
   margin: 30px 0;
   text-align: center;
