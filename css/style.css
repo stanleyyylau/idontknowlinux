@@ -646,45 +646,46 @@ figure.highlight.bash td.code .shell {
 .markdown-content p {
   margin-bottom: 10px;
 }
-.hljs-number,
-.hljs-built_in,
-.hljs-builtin-name,
-.hljs-literal,
-.hljs-type,
-.hljs-params,
-.hljs-meta,
-.hljs-link {
+.bash .hljs-number,
+.bash .hljs-built_in,
+.bash .hljs-builtin-name,
+.bash .hljs-literal,
+.bash .hljs-type,
+.bash .hljs-params,
+.bash .hljs-meta,
+.bash .hljs-link {
   color: #fff;
 }
-.hljs-comment,
-.hljs-quote {
+.bash .hljs-comment,
+.bash .hljs-quote {
   color: #fff;
 }
 .hljs-keyword,
 .hljs-selector-tag {
   color: #4d4d4c;
 }
+.bash,
 .bash .line {
   color: #fff;
 }
-.hljs-keyword,
-.hljs-selector-tag {
+.bash .hljs-keyword,
+.bash .hljs-selector-tag {
   color: #fff;
 }
-.hljs-string,
-.hljs-symbol,
-.hljs-bullet,
-.hljs-addition {
+.bash .hljs-string,
+.bash .hljs-symbol,
+.bash .hljs-bullet,
+.bash .hljs-addition {
   color: #fff;
 }
-.hljs-variable,
-.hljs-template-variable,
-.hljs-tag,
-.hljs-name,
-.hljs-selector-id,
-.hljs-selector-class,
-.hljs-regexp,
-.hljs-deletion {
+.bash .hljs-variable,
+.bash .hljs-template-variable,
+.bash .hljs-tag,
+.bash .hljs-name,
+.bash .hljs-selector-id,
+.bash .hljs-selector-class,
+.bash .hljs-regexp,
+.bash .hljs-deletion {
   color: #fff;
 }
 #tag-cloud {
