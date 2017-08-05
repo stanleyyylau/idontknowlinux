@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+  <meta name="description" content="Stanley&#39;s blog">
+  <meta name="keyword" content="hexo-theme, vuejs">
+  <title>
+    
+      理解Stream和Buffer | I Don&#39;t Know Linux
+    
+  </title>
+  <link href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <link href="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.css" rel="stylesheet">
+  <link href="//cdn.bootcss.com/highlight.js/9.12.0/styles/tomorrow.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/plugins/gitment.css">
+  <script src="//cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+  <script src="//cdn.bootcss.com/geopattern/1.2.3/js/geopattern.min.js"></script>
+  <script src="//cdn.bootcss.com/nprogress/0.2.0/nprogress.min.js"></script>
+  <script src="/js/qrious.js"></script>
+<script src="/js/gitment.js"></script>
+</head>
+  <body>
+    <header class="header fixed-header">
+  <div class="header-container">
+    <a class="home-link" href="/">
+      <div class="logo"></div>
+      <span>I Don't Know Linux</span>
+    </a>
+    <ul class="right-list">
+      
+        <li class="list-item">
+          
+            <a href="/" class="item-link">Home</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/tags/" class="item-link">Tags</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/archives/" class="item-link">Archives</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/project/" class="item-link">Projects</a>
+          
+        </li>
+      
+        <li class="list-item">
+          
+            <a href="/about/" class="item-link">About</a>
+          
+        </li>
+      
+    </ul>
+    <div class="menu">
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </div>
+    <div class="menu-mask">
+      <ul class="menu-list">
+        
+          <li class="menu-item">
+            
+              <a href="/" class="menu-link">Home</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/tags/" class="menu-link">Tags</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/archives/" class="menu-link">Archives</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/project/" class="menu-link">Projects</a>
+            
+          </li>
+        
+          <li class="menu-item">
+            
+              <a href="/about/" class="menu-link">About</a>
+            
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</header>
+
+    <div id="article-banner">
+  <h2>理解Stream和Buffer</h2>
+  <p class="post-date">2017-08-05</p>
+  <div class="arrow-down">
+    <a href="javascript:;"></a>
+  </div>
+</div>
+<main class="app-body">
+  <article class="post-article">
+    <section class="markdown-content"><h2 id="Big-Word-Alert"><a href="#Big-Word-Alert" class="headerlink" title="Big Word Alert"></a>Big Word Alert</h2><ul>
+<li><p>Buffer: A temporary holding spot for data being moved from one place to another. buffers are intentionally limited in size.</p>
+</li>
+<li><p>Stream: A sequence of data made available over time, that pieces of data will eventually combine into a whole.</p>
+</li>
+<li><p>Pipe: Connecting two steams by writing to one stream what is being read from another. you can only pipe a stream to another stream, the stream you’re piping to has to be writable.</p>
+</li>
+</ul>
+<h2 id="为什么Stream这么重要"><a href="#为什么Stream这么重要" class="headerlink" title="为什么Stream这么重要"></a>为什么Stream这么重要</h2><p>Node likes it when we use stream, it helps Node be performant </p>
+<p>Think about stream and asynchronous!!!</p>
+<p>上面了解到Stream其实就是一大堆二进制数据流，比如文件读取，网络请求，这些都是二进制数据流。Stream的特点和好处就是数据是持续流向同一个方向的，然后再拼接起来的，这样就可以把一个大文件切分成一个个小chunk然后再传输，这对性能非常好。举个例子，视频缓存的时候，就是用stream。前端构建工具gulp也是基于stream来操作的。Linux的管道可以把前一条命令的输入重定向到另一条命令的数据，这里用到的也是stream。一个应用就是gzip，gzip就是一个transform stream，当数据流进gzip stream的时候，数据会发生变化(transform). </p>
+<p><img src="https://ws3.sinaimg.cn/large/006tKfTcgy1fi8ucqv02fj319c0mu78p.jpg" alt="stream piping"></p>
+<h2 id="Stream的类型"><a href="#Stream的类型" class="headerlink" title="Stream的类型"></a>Stream的类型</h2><ul>
+<li>readable: 只读stream，可以把他pipe到另一个writable stream</li>
+<li>writable: 写stream，可以pipe其他stream进来</li>
+<li>duplex: 读写stream</li>
+<li>transform: tranform stream 一个经典应用就是gulp, 把less源文件pipe一个一个transform stream，然后编译成css文件</li>
+</ul>
+<h2 id="Buffer，二进制，character-encoding和character-set"><a href="#Buffer，二进制，character-encoding和character-set" class="headerlink" title="Buffer，二进制，character encoding和character set"></a>Buffer，二进制，character encoding和character set</h2><p><strong>都知道计算机只能存储0和1，那英文字和中文字是怎么存储的呢？</strong></p>
+<p>答案是character set！character set就是一套标注定义了哪些字母或者文字对应哪些数字。常见的character set有Unicode和ASCII。unicode table就是一张表定义了哪些数字在计算机上代表哪些字母或符号。OK，那现在有了character set就知道了哪些符号对应哪些数字了，但是问题又来了，我们怎么存储这些数字到计算机呢？这就涉及到character encoding了。character encoding定义了计算机怎么存储这些数字，用8个bit来存储还是16个bit来存储？这些问题就是character encoding解决的。utf-8是常见是encoding，针对unicode的。</p>
+<p>举个例子，用node来读取一个文件文件的时候，读到的是二进制0和1，如果你直接console.log 输入的会是一个个buffer包含0和1，但是如果你读取的时候声明了encoding，node就知道怎么解读这些0和1成真正有意义的文字符号了。</p>
+</section>
+    
+    <div class="money-like">
+      <div class="reward-btn">
+        赏
+        <span class="money-code">
+          <span class="alipay-code">
+            <div class="code-image"></div>
+            <b>使用支付宝打赏</b>
+          </span>
+          <span class="wechat-code">
+            <div class="code-image"></div>
+            <b>使用微信打赏</b>
+          </span>
+        </span>
+      </div>
+      <p class="notice">若你觉得我的文章对你有帮助，欢迎点击上方按钮对我打赏</p>
+    </div>
+    <div class="qrcode">
+      <canvas id="share-qrcode"></canvas>
+      <p class="notice">扫描二维码，分享此文章</p>
+    </div>
+    
+      <!-- UY BEGIN -->
+      <div id="uyan_frame"></div>
+      <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2140159"></script>
+      <!-- UY END -->
+    
+  </article>
+</main>
+
+<script>
+  (function () {
+    var url = 'http://yoursite.com/2017/08/05/understanding-stream-and-buffer/';
+    $('#article-banner').geopattern(url)
+    $('.header').removeClass('fixed-header')
+
+     // error image
+    $(".markdown-content img").on('error', function() {
+      $(this).attr('src', 'http://file.muyutech.com/error-img.png') 
+    })
+
+    // zoom image
+    $(".markdown-content img").on('click', function() {
+      var src = $(this).attr('src')
+      var imageW = $(this).width()
+      var imageH = $(this).height()
+      
+      var zoom = ($(window).width() * 0.95 / imageW).toFixed(2)
+      zoom = zoom < 1 ? 1 : zoom
+      zoom = zoom > 2 ? 2 : zoom
+      var transY = (($(window).height() - imageH) / 2).toFixed(2)
+
+      $('body').append('<div class="image-view-wrap"><div class="image-view-inner"><img src="'+ src +'" /></div></div>')
+      $('.image-view-wrap').addClass('wrap-active')
+      $('.image-view-wrap img').css({
+        'width': `${imageW}`,
+        'transform': `translate3d(0, ${transY}px, 0) scale3d(${zoom}, ${zoom}, 1)`
+      })
+      $('html').css('overflow', 'hidden')
+
+      $('.image-view-wrap').on('click', function() {
+        $(this).remove()
+        $('html').attr('style', '')
+      })
+    })
+
+    // qrcode
+    var qr = new QRious({
+      element: document.getElementById('share-qrcode'),
+      value: document.location.href
+    });
+
+    // gitment
+    var gitmentConfig = "";
+    if (gitmentConfig != "undefined") {
+      var gitment = new Gitment({
+        id: "理解Stream和Buffer",
+        owner: "",
+        repo: "",
+        oauth: {
+          client_id: "",
+          client_secret: ""
+        },
+        theme: {
+          render(state, instance) {
+            const container = document.createElement('div')
+            container.lang = "en-US"
+            container.className = 'gitment-container gitment-root-container'
+            container.appendChild(instance.renderHeader(state, instance))
+            container.appendChild(instance.renderEditor(state, instance))
+            container.appendChild(instance.renderComments(state, instance))
+            container.appendChild(instance.renderFooter(state, instance))
+            return container;
+          }
+        }
+      })
+      gitment.render(document.getElementById('comments'))
+    }
+  })();
+</script>
+
+    <div class="scroll-top">
+  <span class="arrow-icon"></span>
+</div>
+    <footer class="app-footer">
+  <p class="copyright">
+    &copy; 2017 | Proudly powered by <a href="https://hexo.io" target="_blank">Hexo</a>
+    <br>
+    <a href="#">idontknowlinux</a>
+  </p>
+</footer>
+
+<script>
+  function async(u, c) {
+    var d = document, t = 'script',
+      o = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+    o.src = u;
+    if (c) { o.addEventListener('load', function (e) { c(null, e); }, false); }
+    s.parentNode.insertBefore(o, s);
+  }
+</script>
+<script>
+  async("//cdn.bootcss.com/fastclick/1.0.6/fastclick.min.js", function(){
+    FastClick.attach(document.body);
+  })
+</script>
+
+<script>
+  var hasLine = 'true';
+  async("//cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js", function(){
+    $('figure pre').each(function(i, block) {
+      var figure = $(this).parents('figure');
+      if (hasLine == 'false') {
+        figure.find('.gutter').hide();
+      }
+      var lang = figure.attr('class').split(' ')[1] || 'code';
+      var codeHtml = $(this).html();
+      var codeTag = document.createElement('code');
+      codeTag.className = lang;
+      codeTag.innerHTML = codeHtml;
+      $(this).attr('class', '').empty().html(codeTag);
+      figure.attr('data-lang', lang.toUpperCase());
+      hljs.highlightBlock(block);
+    });
+  })
+</script>
+<!-- Baidu Tongji -->
+
+<script src="/js/script.js"></script>
+  </body>
+</html>
