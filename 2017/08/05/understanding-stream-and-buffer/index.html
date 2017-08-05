@@ -121,8 +121,10 @@
 <li><p>Pipe: Connecting two steams by writing to one stream what is being read from another. you can only pipe a stream to another stream, the stream you’re piping to has to be writable.</p>
 </li>
 </ul>
-<h2 id="为什么Stream这么重要"><a href="#为什么Stream这么重要" class="headerlink" title="为什么Stream这么重要"></a>为什么Stream这么重要</h2><p>Node likes it when we use stream, it helps Node be performant </p>
+<h2 id="为什么Stream这么重要"><a href="#为什么Stream这么重要" class="headerlink" title="为什么Stream这么重要"></a>为什么Stream这么重要</h2><p>A bit at a time</p>
+<p>Node likes it when we use stream, it helps Node be performant </p>
 <p>Think about stream and asynchronous!!!</p>
+<p>You don’t need to gether all data before you process it, you process data as it arrives!</p>
 <p>上面了解到Stream其实就是一大堆二进制数据流，比如文件读取，网络请求，这些都是二进制数据流。Stream的特点和好处就是数据是持续流向同一个方向的，然后再拼接起来的，这样就可以把一个大文件切分成一个个小chunk然后再传输，这对性能非常好。举个例子，视频缓存的时候，就是用stream。前端构建工具gulp也是基于stream来操作的。Linux的管道可以把前一条命令的输入重定向到另一条命令的数据，这里用到的也是stream。一个应用就是gzip，gzip就是一个transform stream，当数据流进gzip stream的时候，数据会发生变化(transform). </p>
 <p><img src="https://ws3.sinaimg.cn/large/006tKfTcgy1fi8ucqv02fj319c0mu78p.jpg" alt="stream piping"></p>
 <h2 id="Stream的类型"><a href="#Stream的类型" class="headerlink" title="Stream的类型"></a>Stream的类型</h2><ul>
@@ -134,6 +136,9 @@
 <h2 id="Buffer，二进制，character-encoding和character-set"><a href="#Buffer，二进制，character-encoding和character-set" class="headerlink" title="Buffer，二进制，character encoding和character set"></a>Buffer，二进制，character encoding和character set</h2><p><strong>都知道计算机只能存储0和1，那英文字和中文字是怎么存储的呢？</strong></p>
 <p>答案是character set！character set就是一套标注定义了哪些字母或者文字对应哪些数字。常见的character set有Unicode和ASCII。unicode table就是一张表定义了哪些数字在计算机上代表哪些字母或符号。OK，那现在有了character set就知道了哪些符号对应哪些数字了，但是问题又来了，我们怎么存储这些数字到计算机呢？这就涉及到character encoding了。character encoding定义了计算机怎么存储这些数字，用8个bit来存储还是16个bit来存储？这些问题就是character encoding解决的。utf-8是常见是encoding，针对unicode的。</p>
 <p>举个例子，用node来读取一个文件文件的时候，读到的是二进制0和1，如果你直接console.log 输入的会是一个个buffer包含0和1，但是如果你读取的时候声明了encoding，node就知道怎么解读这些0和1成真正有意义的文字符号了。</p>
+<h2 id="Buffer、fs、Stream之间的关系"><a href="#Buffer、fs、Stream之间的关系" class="headerlink" title="Buffer、fs、Stream之间的关系"></a>Buffer、fs、Stream之间的关系</h2><p>Buffer是数据缓冲区对象，是二制数据在内存中的表现形式。Buffer中的数据可以按stream的形式传递到其它对象中。<br>fs是文件操作对象，文件是数据在硬盘上的表现形式。fs读出数据后会放入Buffer中才能对数据进行操作。写入数据前，数据也应该放到Buffer对象中再写入到文件中。fs读写文件时，数据是按流（stream）形式进行传输的。<br>stream是数据传输对象，如果需要在传输过程中对数据进行处理，则需要处理流数据。如果把文件比做装数据的容器，那流是容器间数据传输的一个过程，流传输的对象就是Buffer（二进制）数据。</p>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><p>readFile会把整个文件都读到内存，才执行callback<br>readFileAync好一点，异步读，但是也是一整个文件读完才执行callback<br>readablestream就不一样，一chunk一chunk来处理数据</p>
+<p><a href="https://itbilu.com/nodejs/core/4y3SPWbS.html" target="_blank" rel="external">Node.js Stream读写数据流</a><br><a href="https://www.youtube.com/watch?v=GlybFFMXXmQ&amp;t=169s" target="_blank" rel="external">Node JS Tutorial for Beginners #13 - Streams and Buffers</a><br><a href="https://www.youtube.com/watch?v=E3tTzx0Qoj0" target="_blank" rel="external">createreadablestream和readfile的区别</a><br><a href="https://www.youtube.com/watch?v=a8W90jDHSho" target="_blank" rel="external">pipe is the elegent version of stream.write</a><br><a href="https://www.youtube.com/watch?v=GpGTYp_G9VE" target="_blank" rel="external">强烈推荐观看</a></p>
 </section>
     
     <div class="money-like">
