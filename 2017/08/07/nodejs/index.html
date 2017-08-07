@@ -114,7 +114,31 @@
 <main class="app-body">
   <article class="post-article">
     <section class="markdown-content"><p>shell是Linux上的脚本语言，能帮我们管理服务器完成很多重复性的工作，但shell毕竟不是严格意义上的变成语言，当shell满足不了你的时候，你可以考虑NodeJS。用Node可以很方法地开发很多有用的命令行工具，因NPM强大的模块，用node开发命令行工具有时候甚至比shell还要方便！</p>
-<h2 id="安装NodeJS"><a href="#安装NodeJS" class="headerlink" title="安装NodeJS"></a>安装NodeJS</h2><h2 id="开发你的一个命令行工具"><a href="#开发你的一个命令行工具" class="headerlink" title="开发你的一个命令行工具"></a>开发你的一个命令行工具</h2><h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2></section>
+<h2 id="安装NodeJS"><a href="#安装NodeJS" class="headerlink" title="安装NodeJS"></a>安装NodeJS</h2><h3 id="定义环境变量"><a href="#定义环境变量" class="headerlink" title="定义环境变量"></a>定义环境变量</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">NODE_VERSION=&quot;v6.7.0&quot;</div></pre></td></tr></table></figure>
+<h3 id="Download"><a href="#Download" class="headerlink" title="Download"></a>Download</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl -LO http://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.gz</div></pre></td></tr></table></figure>
+<h3 id="uncompress"><a href="#uncompress" class="headerlink" title="uncompress"></a>uncompress</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">tar xzf node-$NODE_VERSION-linux-x64.tar.gz</div></pre></td></tr></table></figure>
+<h3 id="selective-copy"><a href="#selective-copy" class="headerlink" title="selective copy"></a>selective copy</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">cp -R ./node-$NODE_VERSION-linux-x64/bin/* /usr/local/bin</div><div class="line">cp -R ./node-$NODE_VERSION-linux-x64/lib/* /usr/local/lib</div><div class="line">cp -R ./node-$NODE_VERSION-linux-x64/include/* /usr/local/include</div><div class="line">cp -R ./node-$NODE_VERSION-linux-x64/share/* /usr/local/share</div></pre></td></tr></table></figure>
+<h2 id="开发你的一个命令行工具"><a href="#开发你的一个命令行工具" class="headerlink" title="开发你的一个命令行工具"></a>开发你的一个命令行工具</h2><p>NodeJS安装包的时候选了-G 全局安装，然后运行 <code>which simplehttpserver</code> 可以发现，全局安装的时候 有一个可执行文件被安装到了 <code>/usr/local/bin/simplehttpserver</code>  这个可执行文件实际上只是一个软连接，真正执行的文件是这个</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">ls -la /usr/local/bin/simplehttpserver</div><div class="line"></div><div class="line">../lib/node_modules/simplehttpserver/cli.js</div></pre></td></tr></table></figure>
+<p>实际上所有node包全局安装都是安装到这个路径</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">/usr/local/lib/node_modules</div></pre></td></tr></table></figure>
+<p>你只所以能用命令行只是因为<code>/usr/local/bin/</code>有一个软连接指向对应的文件夹</p>
+<p>package.json 里面</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&quot;bin&quot;: &#123;</div><div class="line">    &quot;simplehttpserver&quot;: &quot;./cli.js&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>bin指定了那个命令触发 ./cli.js, 让你运行simplehttpserver的时候，实际上就是运行 node ./cli.js</p>
+<p>理解了上面的原理之后我们就可以开发命令行工具了</p>
+<p>新建一个文件夹，在里面创建index.js,里面添加</p>
+<ul>
+<li>#!/usr/bin/env node</li>
+<li>console.log(‘Hello, world!’);</li>
+</ul>
+<p>用npm init创建一个package.json，然后在里面添加</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">&quot;bin&quot;: &#123;</div><div class="line">  &quot;snippet&quot;: &quot;./index.js&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后运行 <code>npm install -g</code> 就可以在<code>/usr/local/bin/</code> 生成可执行文件，并指向到对应的node模块目录</p>
+<p>在开发中，可以 <code>npm link</code> 创建软连接，这样你运行命令的时候实际上是运行最新的文件</p>
+<p><a href="https://developer.atlassian.com/blog/2015/11/scripting-with-node/" target="_blank" rel="external">必看参考文章</a><br><a href="https://www.sitepoint.com/javascript-command-line-interface-cli-node-js/" target="_blank" rel="external">参考文章</a></p>
+<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><p>我一般用node开发命令行工具会这样</p>
+</section>
     
     <div class="money-like">
       <div class="reward-btn">
